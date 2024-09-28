@@ -46,7 +46,7 @@ jobs:
 
       - name: Read Version
         run: |
-          cd /home/runner/work/test/test/target/checkout
+          cd /home/runner/work/opentelemetry-jms-client-instrumentation/opentelemetry-jms-client-instrumentation/target/checkout
           echo -n "VERSION=" >> $GITHUB_ENV
           mvn help:evaluate -Dexpression=project.version -q -DforceStdout >> $GITHUB_ENV
           cat $GITHUB_ENV
@@ -72,6 +72,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: /home/runner/work/test/test/target/checkout/pom.xml
+          asset_path: /home/runner/work/opentelemetry-jms-client-instrumentation/opentelemetry-jms-client-instrumentation/target/checkout/pom.xml
           asset_name: pom.xml
           asset_content_type: application/xml
