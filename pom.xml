@@ -108,7 +108,16 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
+			<dependency>
+				<groupId>io.opentelemetry.semconv</groupId>
+				<artifactId>opentelemetry-semconv</artifactId>
+				<version>${opentelemetry-semconv.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opentelemetry.semconv</groupId>
+				<artifactId>opentelemetry-semconv-incubating</artifactId>
+				<version>${opentelemetry-semconv.version}</version>
+			</dependency>
 			
 					
 			<dependency>
@@ -168,6 +177,14 @@
 		<dependency>
 			<groupId>io.opentelemetry</groupId>
 			<artifactId>opentelemetry-exporter-sender-jdk</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry.semconv</groupId>
+			<artifactId>opentelemetry-semconv</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry.semconv</groupId>
+			<artifactId>opentelemetry-semconv-incubating</artifactId>
 		</dependency>
 		
 		<dependency>
