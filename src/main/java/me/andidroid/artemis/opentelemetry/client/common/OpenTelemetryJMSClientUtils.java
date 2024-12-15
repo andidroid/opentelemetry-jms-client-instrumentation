@@ -79,15 +79,20 @@ public class OpenTelemetryJMSClientUtils {
     private static InstrumenterBuilder<Message, Message> createBuilder(
             MessageOperation messageOperation) {
 
+        return createBuilder(getOpenTelemetry(), messageOperation);
+    }
+
+    private static InstrumenterBuilder<Message, Message> createBuilder(OpenTelemetry openTelemetry,
+            MessageOperation messageOperation) {
+
         // GlobalOpenTelemetry.set();GlobalOpenTelemetry.get()
 
-        InstrumenterBuilder<Message, Message> builder = Instrumenter.builder(getOpenTelemetry() /*
-                                                                                                 * GlobalOpenTelemetry.
-                                                                                                 * get()
-                                                                                                 * getOpenTelemetry
-                                                                                                 * ()
-                                                                                                 */,
-                "jms-client",
+        String serviceName = "jms-client";
+        // TODO: name???
+        serviceName = "artemis_opentelemetry";
+
+        InstrumenterBuilder<Message, Message> builder = Instrumenter.builder(openTelemetry,
+                serviceName,
                 MessagingSpanNameExtractor.create(getter, messageOperation));// new MessageSpanNameExtractor()
 
         // builder.addAttributesExtractors(new )
@@ -234,6 +239,24 @@ public class OpenTelemetryJMSClientUtils {
     public static Instrumenter<Message, Message> getProcessProducerInstrumenter() {
 
         return messageProcessBuilder.buildProducerInstrumenter(new MessageTextMapSetter());
+    }
+
+    public static Instrumenter<Message, Message> getConsumerInstrumenter(OpenTelemetry openTelemetry) {
+
+        return createBuilder(openTelemetry, MessageOperation.RECEIVE)
+                .buildConsumerInstrumenter(new MessageTextMapGetter());
+    }
+
+    public static Instrumenter<Message, Message> getProducerInstrumenter(OpenTelemetry openTelemetry) {
+
+        return createBuilder(openTelemetry, MessageOperation.PUBLISH)
+                .buildProducerInstrumenter(new MessageTextMapSetter());
+    }
+
+    public static Instrumenter<Message, Message> getProcessProducerInstrumenter(OpenTelemetry openTelemetry) {
+
+        return createBuilder(openTelemetry, MessageOperation.PROCESS)
+                .buildProducerInstrumenter(new MessageTextMapSetter());
     }
 
 }

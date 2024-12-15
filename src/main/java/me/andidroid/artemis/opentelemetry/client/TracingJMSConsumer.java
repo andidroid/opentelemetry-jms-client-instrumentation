@@ -26,6 +26,7 @@ import me.andidroid.artemis.opentelemetry.client.common.TracingJMSContextProduce
 
 import java.io.Serializable;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
@@ -43,14 +44,18 @@ public class TracingJMSConsumer implements JMSConsumer {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory
             .getLogger(TracingJMSConsumer.class);
 
-    private final Instrumenter<Message, Message> instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
+    private final Instrumenter<Message, Message> instrumenter;// =
+                                                              // OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
 
     private final JMSConsumer jmsConsumer;
     private final Tracer tracer;
+    private final OpenTelemetry openTelemetry;
 
-    public TracingJMSConsumer(JMSConsumer jmsConsumer, Tracer tracer) {
+    public TracingJMSConsumer(JMSConsumer jmsConsumer, OpenTelemetry openTelemetry, Tracer tracer) {
         this.jmsConsumer = jmsConsumer;
         this.tracer = tracer;
+        this.openTelemetry = openTelemetry;
+        this.instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter(openTelemetry);
     }
 
     @Override
@@ -68,7 +73,7 @@ public class TracingJMSConsumer implements JMSConsumer {
         if (listener instanceof TracingMessageConsumer) {
             jmsConsumer.setMessageListener(listener);
         } else {
-            jmsConsumer.setMessageListener(new TracingMessageListener(listener, tracer));
+            jmsConsumer.setMessageListener(new TracingMessageListener(listener, openTelemetry, tracer));
         }
     }
 

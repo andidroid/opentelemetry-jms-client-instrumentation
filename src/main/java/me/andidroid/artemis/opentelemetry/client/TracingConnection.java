@@ -1,5 +1,6 @@
 package me.andidroid.artemis.opentelemetry.client;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.jms.Connection;
 import jakarta.jms.ConnectionConsumer;
@@ -13,33 +14,36 @@ import jakarta.jms.Topic;
 
 public class TracingConnection implements Connection {
     private final Connection connection;
+    private final OpenTelemetry openTelemetry;
     private final Tracer tracer;
+
     private final boolean traceInLog;
 
-    public TracingConnection(Connection connection, Tracer tracer) {
-        this(connection, tracer, false);
+    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer) {
+        this(connection, openTelemetry, tracer, false);
     }
 
-    public TracingConnection(Connection connection, Tracer tracer, boolean traceInLog) {
+    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer, boolean traceInLog) {
         this.connection = connection;
         this.tracer = tracer;
         this.traceInLog = traceInLog;
+        this.openTelemetry = openTelemetry;
     }
 
     @Override
     public Session createSession(boolean transacted, int acknowledgeMode) throws JMSException {
-        return new TracingSession(connection.createSession(transacted, acknowledgeMode), tracer,
+        return new TracingSession(connection.createSession(transacted, acknowledgeMode), openTelemetry, tracer,
                 traceInLog);
     }
 
     @Override
     public Session createSession(int sessionMode) throws JMSException {
-        return new TracingSession(connection.createSession(sessionMode), tracer, traceInLog);
+        return new TracingSession(connection.createSession(sessionMode), openTelemetry, tracer, traceInLog);
     }
 
     @Override
     public Session createSession() throws JMSException {
-        return new TracingSession(connection.createSession(), tracer, traceInLog);
+        return new TracingSession(connection.createSession(), openTelemetry, tracer, traceInLog);
     }
 
     @Override

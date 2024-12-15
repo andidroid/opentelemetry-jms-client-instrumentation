@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.SpanKind;
@@ -54,18 +55,24 @@ public class TracingJMSProducer implements JMSProducer {
     private JMSContext jmsContext = null;
     private Session jmsSession = null;
     private final Tracer tracer;
-    private Instrumenter<Message, Message> instrumenter = OpenTelemetryJMSClientUtils.getProducerInstrumenter();
+    private OpenTelemetry openTelemetry;
+    private Instrumenter<Message, Message> instrumenter; // = OpenTelemetryJMSClientUtils.getProducerInstrumenter();
 
-    public TracingJMSProducer(JMSProducer jmsProducer, JMSContext jmsContext, Tracer tracer) {
+    public TracingJMSProducer(JMSProducer jmsProducer, JMSContext jmsContext, OpenTelemetry openTelemetry,
+            Tracer tracer) {
         this.jmsProducer = jmsProducer;
         this.jmsContext = jmsContext;
         this.tracer = tracer;
+        this.openTelemetry = openTelemetry;
+        this.instrumenter = OpenTelemetryJMSClientUtils.getProducerInstrumenter(openTelemetry);
     }
 
-    public TracingJMSProducer(JMSProducer jmsProducer, Session jmsSession, Tracer tracer) {
+    public TracingJMSProducer(JMSProducer jmsProducer, Session jmsSession, OpenTelemetry openTelemetry, Tracer tracer) {
         this.jmsProducer = jmsProducer;
         this.jmsSession = jmsSession;
         this.tracer = tracer;
+        this.openTelemetry = openTelemetry;
+        this.instrumenter = OpenTelemetryJMSClientUtils.getProducerInstrumenter(openTelemetry);
     }
 
     @Override
@@ -204,7 +211,7 @@ public class TracingJMSProducer implements JMSProducer {
             LOGGER.debug("TracingJMSProducer.send: started {}", message);
         }
 
-        SpanBuilder spanBuilder = OpenTelemetryJMSClientUtils.getOpenTelemetry().getTracer("TracingJMSProducer")
+        SpanBuilder spanBuilder = openTelemetry.getTracer("TracingJMSProducer")
                 .spanBuilder("TracingJMSProducer.send")
                 .setParent(context)
                 .setAttribute("message", message.toString())
@@ -407,7 +414,8 @@ public class TracingJMSProducer implements JMSProducer {
 
     @Override
     public JMSProducer setAsync(CompletionListener arg0) {
-        jmsProducer.setAsync(new TracingCompletionListener(null, arg0));
+
+        jmsProducer.setAsync(new TracingCompletionListener(openTelemetry, instrumenter, null, arg0));
         return this;
     }
 

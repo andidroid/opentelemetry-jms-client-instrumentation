@@ -1,5 +1,6 @@
 package me.andidroid.artemis.opentelemetry.client.inject;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,11 +27,13 @@ public class TracedProducer {
     private JMSContext jmsContext;
     @Inject
     private Tracer tracer;
+    @Inject
+    private OpenTelemetry openTelemetry;
 
     @Produces
     @Traced
     public JMSContext createJMSContext() {
         LOGGER.info("TracedProducer.createJMSContext()");
-        return new TracingJMSContext(jmsContext, tracer);
+        return new TracingJMSContext(jmsContext, openTelemetry, tracer);
     }
 }

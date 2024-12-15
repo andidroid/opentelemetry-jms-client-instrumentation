@@ -1,8 +1,10 @@
 package me.andidroid.artemis.opentelemetry.client;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 import jakarta.jms.CompletionListener;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSException;
@@ -12,14 +14,17 @@ import jakarta.jms.MessageProducer;
 /**
  * Tracing decorator for JMS MessageProducer
  */
+@Deprecated
 public class TracingMessageProducer implements MessageProducer {
 
     private final MessageProducer messageProducer;
     private final Tracer tracer;
+    private final OpenTelemetry openTelemetry;
 
-    public TracingMessageProducer(MessageProducer messageProducer, Tracer tracer) {
+    public TracingMessageProducer(MessageProducer messageProducer, OpenTelemetry openTelemetry, Tracer tracer) {
         this.messageProducer = messageProducer;
         this.tracer = tracer;
+        this.openTelemetry = openTelemetry;
     }
 
     @Override
@@ -150,7 +155,9 @@ public class TracingMessageProducer implements MessageProducer {
     @Override
     public void send(Message message, CompletionListener completionListener) throws JMSException {
         Span span = startAndInjectSpan(getDestination(), message, tracer);
-        messageProducer.send(message, new TracingCompletionListener(span, completionListener));
+        messageProducer.send(message,
+                new TracingCompletionListener(openTelemetry, null, (Context) span.getSpanContext(),
+                        completionListener));
     }
 
     @Override
@@ -158,7 +165,8 @@ public class TracingMessageProducer implements MessageProducer {
             CompletionListener completionListener) throws JMSException {
         Span span = startAndInjectSpan(getDestination(), message, tracer);
         messageProducer.send(message, deliveryMode, priority, timeToLive,
-                new TracingCompletionListener(span, completionListener));
+                new TracingCompletionListener(openTelemetry, null, (Context) span.getSpanContext(),
+                        completionListener));
     }
 
     @Override
@@ -166,7 +174,8 @@ public class TracingMessageProducer implements MessageProducer {
             throws JMSException {
         Span span = startAndInjectSpan(destination, message, tracer);
         messageProducer.send(destination, message,
-                new TracingCompletionListener(span, completionListener));
+                new TracingCompletionListener(openTelemetry, null, (Context) span.getSpanContext(),
+                        completionListener));
     }
 
     @Override
@@ -174,7 +183,8 @@ public class TracingMessageProducer implements MessageProducer {
             long timeToLive, CompletionListener completionListener) throws JMSException {
         Span span = startAndInjectSpan(destination, message, tracer);
         messageProducer.send(destination, message, deliveryMode, priority, timeToLive,
-                new TracingCompletionListener(span, completionListener));
+                new TracingCompletionListener(openTelemetry, null, (Context) span.getSpanContext(),
+                        completionListener));
     }
 
     private Span startAndInjectSpan(Destination destination, Message message, Tracer tracer2) {
