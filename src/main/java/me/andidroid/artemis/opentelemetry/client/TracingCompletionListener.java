@@ -1,5 +1,6 @@
 package me.andidroid.artemis.opentelemetry.client;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.SpanKind;
@@ -27,36 +28,40 @@ public class TracingCompletionListener implements CompletionListener {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory
             .getLogger(TracingCompletionListener.class);
 
-    private Span span;
+    // private Span span;
     private final CompletionListener completionListener;
     private Instrumenter<Message, Message> instrumenter;
     private Context context;
     private Scope scope = null;
+    private OpenTelemetry openTelemetry;
 
-    public TracingCompletionListener(CompletionListener completionListener) {
-        this.completionListener = completionListener;
-    }
+    // public TracingCompletionListener(CompletionListener completionListener) {
+    // this.completionListener = completionListener;
+    // }
 
-    public TracingCompletionListener(Span span, CompletionListener completionListener) {
-        this.span = span;
-        this.completionListener = completionListener;
-    }
+    // public TracingCompletionListener(Span span, CompletionListener
+    // completionListener) {
+    // this.span = span;
+    // this.completionListener = completionListener;
+    // }
 
-    public TracingCompletionListener(Instrumenter<Message, Message> instrumenter, Context context,
+    public TracingCompletionListener(OpenTelemetry openTelemetry, Instrumenter<Message, Message> instrumenter,
+            Context context,
             CompletionListener completionListener) {
         this.instrumenter = instrumenter;
         this.completionListener = completionListener;
         this.context = context;
+        this.openTelemetry = openTelemetry;
     }
 
-    public void setSpan(Span span) {
-        this.span = span;
-    }
+    // public void setSpan(Span span) {
+    // this.span = span;
+    // }
 
     @Override
     public void onCompletion(Message message) {
 
-        SpanBuilder spanBuilder = OpenTelemetryJMSClientUtils.getOpenTelemetry().getTracer("TracingCompletionListener")
+        SpanBuilder spanBuilder = openTelemetry.getTracer("TracingCompletionListener")
                 .spanBuilder("TracingCompletionListener.onCompletion")
                 .setParent(context)
                 .setAttribute("message", message.toString())

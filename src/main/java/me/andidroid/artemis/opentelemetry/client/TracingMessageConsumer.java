@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
@@ -27,21 +28,25 @@ public class TracingMessageConsumer implements MessageConsumer {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory
             .getLogger(TracingMessageConsumer.class);
 
-    private final Instrumenter<Message, Message> instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
+    private final Instrumenter<Message, Message> instrumenter;// =
+                                                              // OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
 
     private final MessageConsumer messageConsumer;
+    private final OpenTelemetry openTelemetry;
     private final Tracer tracer;
     private final boolean traceInLog;
 
-    public TracingMessageConsumer(MessageConsumer messageConsumer, Tracer tracer) {
-        this(messageConsumer, tracer, false);
+    public TracingMessageConsumer(MessageConsumer messageConsumer, OpenTelemetry openTelemetry, Tracer tracer) {
+        this(messageConsumer, openTelemetry, tracer, false);
     }
 
-    public TracingMessageConsumer(MessageConsumer messageConsumer, Tracer tracer,
+    public TracingMessageConsumer(MessageConsumer messageConsumer, OpenTelemetry openTelemetry, Tracer tracer,
             boolean traceInLog) {
         this.messageConsumer = messageConsumer;
+        this.openTelemetry = openTelemetry;
         this.tracer = tracer;
         this.traceInLog = traceInLog;
+        this.instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter(openTelemetry);
     }
 
     @Override
@@ -59,7 +64,7 @@ public class TracingMessageConsumer implements MessageConsumer {
         if (listener instanceof TracingMessageConsumer) {
             messageConsumer.setMessageListener(listener);
         } else {
-            messageConsumer.setMessageListener(new TracingMessageListener(listener, tracer, traceInLog));
+            messageConsumer.setMessageListener(new TracingMessageListener(listener, openTelemetry, tracer, traceInLog));
         }
     }
 

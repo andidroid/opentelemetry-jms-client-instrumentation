@@ -2,6 +2,7 @@ package me.andidroid.artemis.opentelemetry.client;
 
 import org.slf4j.MDC;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
@@ -27,17 +28,19 @@ public class TracingMessageListener implements MessageListener {
     private final MessageListener messageListener;
     private final Tracer tracer;
     private final boolean traceInLog;
-    private final Instrumenter<Message, Message> instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
+    private final Instrumenter<Message, Message> instrumenter;// =
+                                                              // OpenTelemetryJMSClientUtils.getConsumerInstrumenter();
 
-    public TracingMessageListener(MessageListener messageListener, Tracer tracer) {
-        this(messageListener, tracer, false);
+    public TracingMessageListener(MessageListener messageListener, OpenTelemetry openTelemetry, Tracer tracer) {
+        this(messageListener, openTelemetry, tracer, false);
     }
 
-    public TracingMessageListener(MessageListener messageListener, Tracer tracer,
+    public TracingMessageListener(MessageListener messageListener, OpenTelemetry openTelemetry, Tracer tracer,
             boolean traceInLog) {
         this.messageListener = messageListener;
         this.tracer = tracer;
         this.traceInLog = traceInLog;
+        this.instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter(openTelemetry);
     }
 
     @Override
