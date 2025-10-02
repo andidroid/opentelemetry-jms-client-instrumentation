@@ -27,6 +27,9 @@ import me.andidroid.artemis.opentelemetry.client.common.TracingJMSContextProduce
 import java.io.Serializable;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.MeterBuilder;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
@@ -50,12 +53,14 @@ public class TracingJMSConsumer implements JMSConsumer {
     private final JMSConsumer jmsConsumer;
     private final Tracer tracer;
     private final OpenTelemetry openTelemetry;
+    private final Meter meter;
 
     public TracingJMSConsumer(JMSConsumer jmsConsumer, OpenTelemetry openTelemetry, Tracer tracer) {
         this.jmsConsumer = jmsConsumer;
         this.tracer = tracer;
         this.openTelemetry = openTelemetry;
         this.instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter(openTelemetry);
+        this.meter = openTelemetry.getMeter("artemis");
     }
 
     @Override
@@ -145,5 +150,19 @@ public class TracingJMSConsumer implements JMSConsumer {
         if (scope != null) {
             scope.close();
         }
+
+        // String name = annotation.name();
+        // String description = annotation.description();
+        // String unit = annotation.unit();
+        Attributes args = Attributes.builder().put("", "").build();
+        // method.getDeclaringClass().getSimpleName() + "." +
+        // method.getName()
+        // .setUnit(unit)
+        // .setDescription(description)
+
+        String messageSelector = getMessageSelector();
+
+        meter.counterBuilder("jms-receive").build().add(1, args);
+
     }
 }
