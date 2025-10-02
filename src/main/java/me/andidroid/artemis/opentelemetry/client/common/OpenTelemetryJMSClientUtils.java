@@ -49,7 +49,7 @@ import io.opentelemetry.sdk.autoconfigure.spi.internal.DefaultConfigProperties;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
-import io.opentelemetry.semconv.ResourceAttributes;
+import io.opentelemetry.semconv.ServiceAttributes;
 import io.smallrye.opentelemetry.implementation.exporters.traces.VertxSpanExporterProvider;
 import jakarta.jms.Message;
 
@@ -200,7 +200,7 @@ public class OpenTelemetryJMSClientUtils {
 
         Resource resource = Resource.getDefault()
                 .merge(Resource.create(
-                        Attributes.of(ResourceAttributes.SERVICE_NAME, serviceName)));
+                        Attributes.of(ServiceAttributes.SERVICE_NAME, serviceName)));
 
         /*
          * Tracing
