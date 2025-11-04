@@ -28,6 +28,7 @@ import java.io.Serializable;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.MeterBuilder;
 import io.opentelemetry.api.trace.Span;
@@ -54,13 +55,16 @@ public class TracingJMSConsumer implements JMSConsumer {
     private final Tracer tracer;
     private final OpenTelemetry openTelemetry;
     private final Meter meter;
+    private final LongCounter counter;
 
-    public TracingJMSConsumer(JMSConsumer jmsConsumer, OpenTelemetry openTelemetry, Tracer tracer) {
+    public TracingJMSConsumer(JMSConsumer jmsConsumer, OpenTelemetry openTelemetry, Tracer tracer, Meter meter) {
         this.jmsConsumer = jmsConsumer;
         this.tracer = tracer;
         this.openTelemetry = openTelemetry;
         this.instrumenter = OpenTelemetryJMSClientUtils.getConsumerInstrumenter(openTelemetry);
-        this.meter = openTelemetry.getMeter("artemis");
+        this.meter = meter;
+
+        counter = meter.counterBuilder("jms-receive").setDescription("reveived messages").build();
     }
 
     @Override
@@ -127,6 +131,12 @@ public class TracingJMSConsumer implements JMSConsumer {
         LOGGER.debug("TracingJMSConsumer.startAndFinishConsumerSpan");
 
         Context context = Context.current();
+        String queueName = "";
+        try {
+            queueName = message.getJMSDestination().toString();
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
 
         boolean shouldStart = instrumenter.shouldStart(context, message);
         // tracer.spanBuilder("consume message").setParent()
@@ -138,7 +148,8 @@ public class TracingJMSConsumer implements JMSConsumer {
             try {
                 Span.fromContext(context).addEvent("messageReceive").setAttribute("messageId",
                         message.getJMSMessageID()).setAttribute("messageRedelivered",
-                                message.getJMSRedelivered());
+                                message.getJMSRedelivered())
+                        .setAttribute("queue", queueName).setAttribute("selector", jmsConsumer.getMessageSelector());
             } catch (JMSException e) {
                 LOGGER.error("error getting message meta data", e);
             }
@@ -154,15 +165,16 @@ public class TracingJMSConsumer implements JMSConsumer {
         // String name = annotation.name();
         // String description = annotation.description();
         // String unit = annotation.unit();
-        Attributes args = Attributes.builder().put("", "").build();
+        Attributes args = Attributes.builder().put("queue", queueName)
+                .put("selector", jmsConsumer.getMessageSelector()).build();
         // method.getDeclaringClass().getSimpleName() + "." +
         // method.getName()
         // .setUnit(unit)
         // .setDescription(description)
 
-        String messageSelector = getMessageSelector();
+        // String messageSelector = getMessageSelector();
 
-        meter.counterBuilder("jms-receive").build().add(1, args);
+        counter.add(1, args);
 
     }
 }

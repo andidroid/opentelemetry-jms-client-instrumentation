@@ -1,6 +1,7 @@
 package me.andidroid.artemis.opentelemetry.client;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.jms.Connection;
 import jakarta.jms.ConnectionConsumer;
@@ -16,16 +17,19 @@ public class TracingConnection implements Connection {
     private final Connection connection;
     private final OpenTelemetry openTelemetry;
     private final Tracer tracer;
+    private final Meter meter;
 
     private final boolean traceInLog;
 
-    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer) {
-        this(connection, openTelemetry, tracer, false);
+    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer, Meter meter) {
+        this(connection, openTelemetry, tracer, meter, false);
     }
 
-    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer, boolean traceInLog) {
+    public TracingConnection(Connection connection, OpenTelemetry openTelemetry, Tracer tracer, Meter meter,
+            boolean traceInLog) {
         this.connection = connection;
         this.tracer = tracer;
+        this.meter = meter;
         this.traceInLog = traceInLog;
         this.openTelemetry = openTelemetry;
     }

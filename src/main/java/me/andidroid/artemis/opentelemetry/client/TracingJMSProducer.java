@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.SpanKind;
@@ -55,24 +58,31 @@ public class TracingJMSProducer implements JMSProducer {
     private JMSContext jmsContext = null;
     private Session jmsSession = null;
     private final Tracer tracer;
+    private final Meter meter;
     private OpenTelemetry openTelemetry;
     private Instrumenter<Message, Message> instrumenter; // = OpenTelemetryJMSClientUtils.getProducerInstrumenter();
+    private final LongCounter counter;
 
     public TracingJMSProducer(JMSProducer jmsProducer, JMSContext jmsContext, OpenTelemetry openTelemetry,
-            Tracer tracer) {
+            Tracer tracer, Meter meter) {
         this.jmsProducer = jmsProducer;
         this.jmsContext = jmsContext;
         this.tracer = tracer;
+        this.meter = meter;
         this.openTelemetry = openTelemetry;
         this.instrumenter = OpenTelemetryJMSClientUtils.getProducerInstrumenter(openTelemetry);
+        counter = meter.counterBuilder("jms-send").setDescription("send messages").build();
     }
 
-    public TracingJMSProducer(JMSProducer jmsProducer, Session jmsSession, OpenTelemetry openTelemetry, Tracer tracer) {
+    public TracingJMSProducer(JMSProducer jmsProducer, Session jmsSession, OpenTelemetry openTelemetry, Tracer tracer,
+            Meter meter) {
         this.jmsProducer = jmsProducer;
         this.jmsSession = jmsSession;
         this.tracer = tracer;
+        this.meter = meter;
         this.openTelemetry = openTelemetry;
         this.instrumenter = OpenTelemetryJMSClientUtils.getProducerInstrumenter(openTelemetry);
+        counter = meter.counterBuilder("jms-send").setDescription("send messages").build();
     }
 
     @Override
@@ -195,6 +205,13 @@ public class TracingJMSProducer implements JMSProducer {
     public JMSProducer send(Destination destination, Message message) {
         Context context = Context.current();
 
+        String queueName = "";
+        try {
+            queueName = message.getJMSDestination().toString();
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
         try {
             message.setJMSDestination(destination);
             message.setStringProperty("clientid", this.jmsContext.getClientID());
@@ -239,6 +256,21 @@ public class TracingJMSProducer implements JMSProducer {
                     scope.close();
                 }
             }
+
+            // String name = annotation.name();
+            // String description = annotation.description();
+            // String unit = annotation.unit();
+            Attributes args = Attributes.builder().put("queue", queueName)
+                    .build();
+            // method.getDeclaringClass().getSimpleName() + "." +
+            // method.getName()
+            // .setUnit(unit)
+            // .setDescription(description)
+
+            // String messageSelector = getMessageSelector();
+
+            counter.add(1, args);
+
         } catch (Throwable e) {
             this.instrumenter.end(context, message, null, e);
             // SpanJmsDecorator.onError(e, span);

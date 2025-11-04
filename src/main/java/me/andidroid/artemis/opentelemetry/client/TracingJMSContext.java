@@ -20,6 +20,7 @@ import jakarta.jms.Topic;
 import java.io.Serializable;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Tracer;
 
 /**
@@ -29,22 +30,24 @@ public class TracingJMSContext implements JMSContext {
 
     private final JMSContext jmsContext;
     private final Tracer tracer;
+    private final Meter meter;
     private final OpenTelemetry openTelemetry;
 
-    public TracingJMSContext(JMSContext jmsContext, OpenTelemetry openTelemetry, Tracer tracer) {
+    public TracingJMSContext(JMSContext jmsContext, OpenTelemetry openTelemetry, Tracer tracer, Meter meter) {
         this.jmsContext = jmsContext;
         this.openTelemetry = openTelemetry;
         this.tracer = tracer;
+        this.meter = meter;
     }
 
     @Override
     public JMSContext createContext(int sessionMode) {
-        return new TracingJMSContext(jmsContext.createContext(sessionMode), openTelemetry, tracer);
+        return new TracingJMSContext(jmsContext.createContext(sessionMode), openTelemetry, tracer, meter);
     }
 
     @Override
     public JMSProducer createProducer() {
-        return new TracingJMSProducer(jmsContext.createProducer(), jmsContext, openTelemetry, tracer);
+        return new TracingJMSProducer(jmsContext.createProducer(), jmsContext, openTelemetry, tracer, meter);
     }
 
     @Override
@@ -164,18 +167,19 @@ public class TracingJMSContext implements JMSContext {
 
     @Override
     public JMSConsumer createConsumer(Destination destination) {
-        return new TracingJMSConsumer(jmsContext.createConsumer(destination), openTelemetry, tracer);
+        return new TracingJMSConsumer(jmsContext.createConsumer(destination), openTelemetry, tracer, meter);
     }
 
     @Override
     public JMSConsumer createConsumer(Destination destination, String messageSelector) {
-        return new TracingJMSConsumer(jmsContext.createConsumer(destination, messageSelector), openTelemetry, tracer);
+        return new TracingJMSConsumer(jmsContext.createConsumer(destination, messageSelector), openTelemetry, tracer,
+                meter);
     }
 
     @Override
     public JMSConsumer createConsumer(Destination destination, String messageSelector, boolean noLocal) {
         return new TracingJMSConsumer(jmsContext.createConsumer(destination, messageSelector, noLocal), openTelemetry,
-                tracer);
+                tracer, meter);
     }
 
     @Override
@@ -190,36 +194,37 @@ public class TracingJMSContext implements JMSContext {
 
     @Override
     public JMSConsumer createDurableConsumer(Topic topic, String name) {
-        return new TracingJMSConsumer(jmsContext.createDurableConsumer(topic, name), openTelemetry, tracer);
+        return new TracingJMSConsumer(jmsContext.createDurableConsumer(topic, name), openTelemetry, tracer, meter);
     }
 
     @Override
     public JMSConsumer createDurableConsumer(Topic topic, String name, String messageSelector, boolean noLocal) {
         return new TracingJMSConsumer(jmsContext.createDurableConsumer(topic, name, messageSelector, noLocal),
-                openTelemetry, tracer);
+                openTelemetry, tracer, meter);
     }
 
     @Override
     public JMSConsumer createSharedDurableConsumer(Topic topic, String name) {
-        return new TracingJMSConsumer(jmsContext.createSharedDurableConsumer(topic, name), openTelemetry, tracer);
+        return new TracingJMSConsumer(jmsContext.createSharedDurableConsumer(topic, name), openTelemetry, tracer,
+                meter);
     }
 
     @Override
     public JMSConsumer createSharedDurableConsumer(Topic topic, String name, String messageSelector) {
         return new TracingJMSConsumer(jmsContext.createSharedDurableConsumer(topic, name, messageSelector),
-                openTelemetry, tracer);
+                openTelemetry, tracer, meter);
     }
 
     @Override
     public JMSConsumer createSharedConsumer(Topic topic, String sharedSubscriptionName) {
         return new TracingJMSConsumer(jmsContext.createSharedConsumer(topic, sharedSubscriptionName), openTelemetry,
-                tracer);
+                tracer, meter);
     }
 
     @Override
     public JMSConsumer createSharedConsumer(Topic topic, String sharedSubscriptionName, String messageSelector) {
         return new TracingJMSConsumer(jmsContext.createSharedConsumer(topic, sharedSubscriptionName, messageSelector),
-                openTelemetry, tracer);
+                openTelemetry, tracer, meter);
     }
 
     @Override
