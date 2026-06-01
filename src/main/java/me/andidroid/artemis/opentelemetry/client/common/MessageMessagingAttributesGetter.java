@@ -114,14 +114,4 @@ final class MessageMessagingAttributesGetter
         return Collections.emptyList();
     }
 
-    @Override
-    public Long getMessagePayloadCompressedSize(Message arg0) {
-        return null;
-    }
-
-    @Override
-    public Long getMessagePayloadSize(Message arg0) {
-        return null;
-    }
-
 }
