@@ -207,7 +207,7 @@ public class OpenTelemetryJMSClientUtils {
          */
         LOGGER.debug("create vertx span exporter");
 
-        ConfigProperties configs = DefaultConfigProperties.create(new HashMap<>());
+        ConfigProperties configs = DefaultConfigProperties.createFromMap(new HashMap<>());
         SdkTracerProvider sdkTracerProvider = SdkTracerProvider.builder()
                 .addSpanProcessor(BatchSpanProcessor
                         .builder(new VertxSpanExporterProvider().createExporter(configs)).build())
