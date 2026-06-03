@@ -25,7 +25,7 @@
 		<opentelemetry-semconv-alpha.version>${opentelemetry-semconv.version}-alpha</opentelemetry-semconv-alpha.version>
 		<smallrye-opentelemetry.version>2.14.0</smallrye-opentelemetry.version>
 		
-		<slf4j.version>2.0.17</slf4j.version>
+		<slf4j.version>2.0.18</slf4j.version>
 		<junit.jupiter.version>6.1.0</junit.jupiter.version>
 	</properties>
 
